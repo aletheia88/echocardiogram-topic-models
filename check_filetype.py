@@ -72,17 +72,43 @@ def update_file_labels(cos_similarity, fileA, fileB, file_labels):
         * both are categorized
             - hooray~ 
     '''
-    
-
-    '''
     threshold = 0.9
+    
+    # fileA and file B are similar types
     if cos_similarity > threshold:
-        label = str(len(file_labels)+1)
-        if file_labels[label]
-        file_labels[str(len(file_labels)+1)].append
+        
+        # both fileA and fileB are uncategorized files
+        if fileA not in file_labels.values() and fileB not in file_labels.values():
+            
+            new_label = len(file_labels)+1)
+            file_labels[str(new_label)] = [fileA, fileB]
+            
+        # either fileA or fileB has already been categorized        
+        elif fileA in file_labels.values() or fileB in file_labels.values():
 
-    return file_labels
-    '''
+            categorized_file = fileA if fileA in file_labels.values() else fileB
+            new_file = [fileA, fileB].remove(categorized_file)[0]
+
+            for label, files in file_labels.items():
+                if categorized_file in files:
+                    new_label = int(label)+1
+                    break
+            file_labels[str(file_labels)].extend([new_file]) 
+    
+    # fileA and fileB are not similar types
+    else:
+        # both fileA and fileB are uncategorized files
+        if fileA not in file_labels.values() and fileB not in file_labels.values():
+             new_label_1, new_label_2 = len(file_labels)+1, len(file_labels)+2
+             file_labels[str(new_label_1)] = [fileA]
+             file_labels[str(new_label_2)] = [fileB]
+        
+        # either fileA or fileB has already been categorized
+        elif fileA in file_labels.values() or fileB in file_labels.values():
+
+            categorized_file = fileA if fileA in file_labels.values() else fileB
+            new_file = [fileA, fileB].remove(categorized_file)[0]
+            file_labels[str(len(file_labels)+1)].extend([new_file])
 
 if __name__ == "__main__":
     return     
