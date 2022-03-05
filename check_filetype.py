@@ -17,12 +17,13 @@ def categorize(path):
                 '10026_20171208']
     '''
     for folder_id in folder_ids:
+        
         for dirs, _, files in os.walk(f'{path}/{folder_id}'):
             file_id = dirs.split('/')[1]
         
-        print(f'Processing {folder_id}')
-        file_labels_folder_i = compare_files(files, {}, f'{path}/{folder_id}')
-        file_labels_all_folders[folder_id] = file_labels_folder_i
+            print(f'Processing {folder_id}')
+            file_labels_folder_i = compare_files(files, {}, f'{path}/{folder_id}')
+            file_labels_all_folders[folder_id] = file_labels_folder_i
     
     with open('categories_perfolder.json', 'w') as f:
         json.dump(file_labels_all_folders, f)
@@ -31,6 +32,7 @@ def categorize(path):
 def compare_files(files, file_labels, img_path):
     
     for i, fileA in enumerate(files):
+        
         dsA = dicom.dcmread(f'{img_path}/{fileA}')
         pixel_array_A = format_pixel_array(dsA.pixel_array)
 
@@ -120,11 +122,8 @@ def update_file_labels(cos_similarity, fileA, fileB, file_labels):
 def file_exists(f, file_labels):
 
     for label, files in file_labels.items():
-        
         if f in files:
             return label
-        else:
-            return False
 
 if __name__ == "__main__":
     categorize('dcm_data')
