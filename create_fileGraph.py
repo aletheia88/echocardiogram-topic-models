@@ -7,7 +7,11 @@ import numpy as np
 import pydicom as dicom
 from sklearn.metrics.pairwise import cosine_similarity, cosine_distances
 
-def categorize(path, folder_id):
+def categorize_files(path, folder_id, threshold):
+    
+    return get_communities(get_fileGraph(path, folder_id, threshold))
+
+def get_fileGraph(path, folder_id, threshold):
 
     # create empty graph for each file
     G = nx.Graph()
@@ -17,15 +21,18 @@ def categorize(path, folder_id):
     G.add_nodes_from(nodes)
     
     # build graph
-    file_graph = build_graph(nodes, G, f'{path}/{folder_id}')
+    file_graph = build_graph(nodes, G, f'{path}/{folder_id}', threshold)
+    
+    return file_graph
+
+def get_communities(file_graph)
+
     # find communities
     file_communities = greedy_modularity_communities(file_graph)
     
     return file_communities
 
-def build_graph(nodes, graph, img_path):
-    
-    threshold = 0.9
+def build_graph(nodes, graph, img_path, threshold):
 
     for i, fileA in enumerate(nodes):
         dsA = dicom.dcmread(f'{img_path}/{fileA}')
@@ -33,7 +40,7 @@ def build_graph(nodes, graph, img_path):
 
         for fileB in nodes[i+1:]:
             dsB = dicom.dcmread(f'{img_path}/{fileB}')
-            print(f'comparing {fileA} & {fileB}...')
+            #print(f'comparing {fileA} & {fileB}...')
             pixel_array_B = format_pixel_array(dsB.pixel_array)
             cos_similarity = cosine_similarity(pixel_array_A.reshape(1,-1),
                                                 pixel_array_B.reshape(1,-1))
@@ -54,4 +61,4 @@ def format_pixel_array(pixel_array):
 
 if __name__ == "__main__":
     
-    categorize('dcm_data', '22444_20180404')
+    categorize_files('dcm_data', '22444_20180404', threshold=0.6)
