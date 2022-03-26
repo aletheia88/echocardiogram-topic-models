@@ -1,3 +1,4 @@
+import re
 
 def get_clusters_from_annotation(annotation_file):
 
@@ -9,6 +10,8 @@ def get_clusters_from_annotation(annotation_file):
     
     for line in lines:
         
+        line.rstrip()
+        #line = re.sub(r'[\\*n*]', "", line)
         file_id = line.split(' ')[0]
         
         if len(annotation_dict) == 0:
@@ -23,7 +26,11 @@ def get_clusters_from_annotation(annotation_file):
             elif check[0] == False:
                 annotation_dict[len(annotation_dict)] = [line]
 
-    return annotation_dict
+    for label, file_ids in annotation_dict.items():
+        
+        clusters[label] = [file_ids[0].split(' ')[0]] + file_ids[1:]
+
+    return clusters
 
 def exist(content, annotation_dict):
     
@@ -32,10 +39,11 @@ def exist(content, annotation_dict):
 
     for label, annotation in annotation_dict.items():
         
-        content_tokens = content.split(' ')
-        annotation_tokens = annotation[0].split(' ')
+        content_tokens = content.split(' ')[1:]
+        #print(content_tokens)
+        annotation_tokens = annotation[0].split(' ')[1:]
 
-        if content_tokens[1:] == annotation_tokens[1:]:
+        if content_tokens == annotation_tokens:
             return (True, label)
 
     return (False, None)
