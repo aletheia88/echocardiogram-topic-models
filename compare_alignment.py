@@ -1,4 +1,20 @@
 import re
+import pickle
+
+def format_clusters(annotation_file, communities):
+    
+    cluster_category_dict = get_clusters_from_annotation(annotation_file)
+    formated_clusters_grd = []
+    formated_clusters_alg = []
+        
+    for _, clusters in cluster_category_dict.items():
+        formated_clusters_grd.append(clusters)
+    
+    for community in communities:
+        community = [c.split('-')[-1].split('.')[0][-2:] for c in sorted(community)]
+        formated_clusters_alg.append(community) 
+    
+    return formated_clusters_grd, formated_clusters_alg
 
 def get_clusters_from_annotation(annotation_file):
 
@@ -11,7 +27,6 @@ def get_clusters_from_annotation(annotation_file):
     for line in lines:
         
         line.rstrip()
-        #line = re.sub(r'[\\*n*]', "", line)
         file_id = line.split(' ')[0]
         
         if len(annotation_dict) == 0:
@@ -40,7 +55,6 @@ def exist(content, annotation_dict):
     for label, annotation in annotation_dict.items():
         
         content_tokens = content.split(' ')[1:]
-        #print(content_tokens)
         annotation_tokens = annotation[0].split(' ')[1:]
 
         if content_tokens == annotation_tokens:
@@ -49,6 +63,10 @@ def exist(content, annotation_dict):
     return (False, None)
 
 if __name__ == "__main__":
-
-    annotation_dict = get_clusters_from_annotation('sam-clusters.txt') 
-    print(annotation_dict)
+    
+    annotation_file = 'sam-clusters.txt'
+    f = open('sample_communities.pkl', 'rb')
+    communities = pickle.load(f)
+    f.close()
+    formated_clusters = format_clusters(annotation_file, communities)
+    print(formated_clusters)
