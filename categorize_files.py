@@ -1,7 +1,6 @@
 import networkx as nx
 from networkx.algorithms import community
 from networkx.algorithms.community import greedy_modularity_communities
-
 import os
 import numpy as np
 import pydicom as dicom
@@ -25,7 +24,7 @@ def get_fileGraph(path, folder_id, threshold):
     
     return file_graph
 
-def get_communities(file_graph)
+def get_communities(file_graph):
 
     # find communities
     file_communities = greedy_modularity_communities(file_graph)
@@ -40,7 +39,7 @@ def build_graph(nodes, graph, img_path, threshold):
 
         for fileB in nodes[i+1:]:
             dsB = dicom.dcmread(f'{img_path}/{fileB}')
-            #print(f'comparing {fileA} & {fileB}...')
+            print(f'comparing {fileA} & {fileB}...')
             pixel_array_B = format_pixel_array(dsB.pixel_array)
             cos_similarity = cosine_similarity(pixel_array_A.reshape(1,-1),
                                                 pixel_array_B.reshape(1,-1))
@@ -61,4 +60,5 @@ def format_pixel_array(pixel_array):
 
 if __name__ == "__main__":
     
-    categorize_files('dcm_data', '22444_20180404', threshold=0.6)
+    communities = categorize_files('dcm_data', '22444_20180404', threshold=0.9)
+    print(communities)
