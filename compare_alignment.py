@@ -9,16 +9,16 @@ def get_thres_randscore_pairs(annotation_file, path, folder_id):
     
     rand_scores = []
     thresholds = [0.8 + i*0.01 for i in range(11)]
-    num_files = len(os.listdir(f'{path}/{folder_id}'))
-    
-    clusters_grd = get_clusters_from_annotation(annotation_file)
-    labels_grd = format_clusters(clusters_grd, num_files, 'grd')
-    print(f'labels_grd: {labels_grd}')
+    file_ids = os.listdir(f'{path}/{folder_id}')
+    max_file_id = max([int(s.split('.')[0].split('-')[-1]) for s in file_ids])
 
+    clusters_grd = get_clusters_from_annotation(annotation_file)
+    labels_grd = format_clusters(clusters_grd, max_file_id, 'grd')
+    print(f'labels_grd: {labels_grd}')
     for threshold in thresholds:
         
         clusters_alg = categorize_files(path, folder_id, threshold)
-        labels_alg = format_clusters(clusters_alg, num_files, 'alg')
+        labels_alg = format_clusters(clusters_alg, max_file_id, 'alg')
         print(f'labels_alg: {labels_alg}')
 
         rand_scores.append(rand_score(labels_grd, labels_alg))
@@ -30,7 +30,7 @@ def get_thres_randscore_pairs(annotation_file, path, folder_id):
 def format_clusters(clusters, num_files, typ):
     
     if typ == 'grd':
-        formated_clusters_grd = [] 
+        formated_clusters_grd = []
         labels_grd = np.zeros(num_files+1)
 
         for _, cls in clusters.items():
