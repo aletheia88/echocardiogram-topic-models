@@ -7,8 +7,39 @@ import numpy as np
 import pydicom as dicom
 import json
 import cv2
+from random import sample
 from sklearn.metrics.pairwise import cosine_similarity, cosine_distances
 
+def aggregate_clusters(ds_name, clusters_file, threshold):
+
+    # Takes in json file that contains clusters for each patient file graph and
+    # the threshold to use for further clustering across alll patient graphs
+
+    with open(clusters_file, "r") as f:
+
+        patient_clusters = json.load(f)
+
+    # generate nodes for our new graph
+    
+    nodes = []
+
+    for patient_id, clusters in patient_clusters.items():    
+        for cluster in clusters:
+            nodes += [f"{patient_id}/{sample(cluster, 1)[0]}"]
+    
+    G = nx.Graph()
+    G.add_nodes_from(nodes)
+
+    file_graph = build_graph(nodes, G, ds_name, threshold)
+    frozensets = get_communities(file_graph)
+    
+    communities = []
+
+    for fs in frozensets:
+        communities.append([c for c in fs])
+        
+    return communities
+    
 def categorize_all_patient_files(path, threshold):
 
     folder_ids = [folders for _, folders, _ in os.walk(f'{path}')][0]
@@ -16,7 +47,7 @@ def categorize_all_patient_files(path, threshold):
     # 10377_20180815 -> folder_ids[5] 
     
     for folder_id in folder_ids[6:]:
-        
+
         cluster = categorize_one_patient_files(path, folder_id, threshold)
         
         print(f'{folder_id} : {cluster}')
@@ -29,11 +60,6 @@ def categorize_all_patient_files(path, threshold):
         all_clusters[folder_id] = cluster
         json.dump(all_clusters, ff, indent=2)
         ff.close()
-   
-    '''
-    with open('clusters_per_patient.json', 'w') as f:
-        json.dump(info, f, indent=2)
-    '''
 
 def categorize_one_patient_files(path, folder_id, threshold):
     
@@ -75,7 +101,7 @@ def get_communities(file_graph):
 
 def build_graph(nodes, graph, img_path, threshold):
     
-    print(f'All nodes - {nodes}')
+    print(f'All nodes - {len(nodes)}')
 
     for i, fileA in enumerate(nodes):
         
@@ -96,9 +122,9 @@ def build_graph(nodes, graph, img_path, threshold):
             #print(f'reading file B {img_path}/{fileB}')
 
             if fileB.split('.')[-1] == 'dcm':
-
+                
+                print(f'comparing {fileA} & {fileB}...')
                 dsB = dicom.dcmread(f'{img_path}/{fileB}')
-                #print(f'comparing {fileA} & {fileB}...')
                 pixel_array_B = format_pixel_array(dsB.pixel_array)
                 cos_similarity = cosine_similarity(pixel_array_A.reshape(1,-1),
                                                    pixel_array_B.reshape(1,-1))
@@ -127,5 +153,12 @@ def format_pixel_array(pixel_array):
         return np.mean(pixel_array, axis=0)
 
 if __name__ == "__main__":
+    
+    # Step 1 - 2
+    # categorize_all_patient_files('dcm_data', 0.9)
 
-    categorize_all_patient_files('dcm_data', 0.9)
+    # Step 3
+    communities = aggregate_clusters("dcm_data", "clusters_per_patient.json", 0.8)
+    print(communities)
+    print(len(communities))
+
