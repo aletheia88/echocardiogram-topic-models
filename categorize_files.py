@@ -7,8 +7,51 @@ import numpy as np
 import pydicom as dicom
 import json
 import cv2
+import itertools
 from random import sample
 from sklearn.metrics.pairwise import cosine_similarity, cosine_distances
+
+def reconstruct(data_type_file):
+
+    return
+
+def group(ds_name, clusters_file, threshold):
+
+    with open(clusters_file, "r") as f:
+        all_types = json.load(f)
+    '''
+    # test a small sample
+    all_types = dict(itertools.islice(all_types.items(), 4))
+    '''
+    nodes = []
+
+    for _, types in all_types.items():
+        nodes += [f"{sample(types, 1)[0]}"]
+    
+    G = nx.Graph()
+    G.add_nodes_from(nodes)
+
+    file_graph = build_graph(nodes, G, ds_name, threshold)
+    
+    frozensets = get_communities(file_graph)
+    
+    communities = []
+
+    for fs in frozensets:
+        communities.append([c for c in fs])
+    
+    print(f'communities - \n {communities}')
+    print(f'{len(communities)}')
+
+    data_type_dict = {}
+
+    for i, community in enumerate(communities):
+        data_type_dict[str(i+1)] = community
+
+    print(data_type_dict)
+
+    with open("dcm_data_types_v2.json", "w") as f:
+        json.dump(data_type_dict, f, indent=2)
 
 def aggregate_clusters(ds_name, clusters_file, threshold):
 
@@ -123,7 +166,7 @@ def build_graph(nodes, graph, img_path, threshold):
 
             if fileB.split('.')[-1] == 'dcm':
                 
-                print(f'comparing {fileA} & {fileB}...')
+                #print(f'comparing {fileA} & {fileB}...')
                 dsB = dicom.dcmread(f'{img_path}/{fileB}')
                 pixel_array_B = format_pixel_array(dsB.pixel_array)
                 cos_similarity = cosine_similarity(pixel_array_A.reshape(1,-1),
@@ -137,6 +180,8 @@ def build_graph(nodes, graph, img_path, threshold):
                                 pixel_array_A.reshape(1,-1),
                                 pixel_array_B.reshape(1,-1))
 
+            print(f'similarity bw {fileA} & {fileB} is {cos_similarity[0][0]}')
+            
             if cos_similarity > threshold:
                 graph.add_edge(fileA, fileB)
 
@@ -156,9 +201,11 @@ if __name__ == "__main__":
     
     # Step 1 - 2
     # categorize_all_patient_files('dcm_data', 0.9)
-
+    '''
     # Step 3
     communities = aggregate_clusters("dcm_data", "clusters_per_patient.json", 0.8)
     print(communities)
     print(len(communities))
+    '''
 
+    group("dcm_data", "dcm_data_types.json", 0.6)
