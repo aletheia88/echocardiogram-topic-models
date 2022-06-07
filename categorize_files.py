@@ -9,11 +9,47 @@ import json
 import cv2
 import itertools
 from random import sample
-from sklearn.metrics.pairwise import cosine_similarity, cosine_distances
+from sklearn.metrics.pairwise import cosine_similarity
 
-def reconstruct(data_type_file):
+def reconstruct(data_type_file, patient_clusters_file, file_to_write):
+    
+    '''
+    Add back the nodes represented by the sample nodes that were missed when
+    aggregating clusters to form distinct data types
+    '''
+    
+    with open(data_type_file, "r") as f:
+        data_type_dict = json.load(f)
+    
+    with open(patient_clusters_file, "r") as ff:
+        patient_cluster_dict = json.load(ff)
 
-    return
+    for typ, file_names in data_type_dict.items():
+
+        for file_name in file_names:
+
+            patient_id = file_name.split('/')[0]
+            file_id = file_name.split('/')[1]
+
+            for cluster in patient_cluster_dict[patient_id]:
+
+                if file_id in cluster:
+                    
+                    print(f'find {file_id} in {cluster}')
+                    
+                    cluster.remove(file_id)
+                    patient_cluster_dict[patient_id].remove(cluster)
+
+                    print(f'added_files are {cluster}')
+
+                    if cluster != None:
+                        
+                        print(f'Extend {typ} by adding {cluster}')
+                        data_type_dict[typ].extend([f"{patient_id}/{f_name}" for f_name in cluster])
+                        break
+    
+    with open(file_to_write, "w") as f:
+        json.dump(data_type_dict, f, indent=2)
 
 def group(ds_name, clusters_file, threshold):
 
@@ -169,8 +205,6 @@ def build_graph(nodes, graph, img_path, threshold):
                 #print(f'comparing {fileA} & {fileB}...')
                 dsB = dicom.dcmread(f'{img_path}/{fileB}')
                 pixel_array_B = format_pixel_array(dsB.pixel_array)
-                cos_similarity = cosine_similarity(pixel_array_A.reshape(1,-1),
-                                                   pixel_array_B.reshape(1,-1))
 
             elif fileB.split('.')[-1] == 'png':
                 
@@ -208,4 +242,6 @@ if __name__ == "__main__":
     print(len(communities))
     '''
 
-    group("dcm_data", "dcm_data_types.json", 0.6)
+    # group("dcm_data", "dcm_data_types.json", 0.6)
+
+    reconstruct("dcm_data_types.json", "clusters_per_patient.json", "data_types_reconstructed.json")
